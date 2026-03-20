@@ -8,10 +8,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const state = { user:null, role:null, breakdowns:[], pmRecords:[], equipments:[], spares:[], listenersStarted:false };
-
 const $ = (id) => document.getElementById(id);
 
-// PAGINATION
+// ================= PAGINATION =================
 const pageState = { breakdowns:1, pm:1, equipments:1 };
 const ITEMS_PER_PAGE = window.innerWidth < 768 ? 3 : 5;
 
@@ -32,7 +31,7 @@ window.changePage = function(type, step){
   renderAll();
 };
 
-// SWIPE SUPPORT
+// ================= SWIPE =================
 function addSwipe(element, type){
   let startX = 0;
   element.addEventListener('touchstart', e => startX = e.touches[0].clientX);
@@ -43,10 +42,11 @@ function addSwipe(element, type){
   });
 }
 
-// RENDER LIST
+// ================= RENDER =================
 function renderList(id, items, type){
   const list = $(id);
-  if (!items.length){
+
+  if (!items.length) {
     list.innerHTML = '<p>No records yet.</p>';
     return;
   }
@@ -54,14 +54,46 @@ function renderList(id, items, type){
   const key = type === 'pm' ? 'pm' : type;
   const paginated = paginate(items, key);
 
-  let html = paginated.map(item => `
-    <div class="card-item">
-      <h4>${item.equipmentName || item.name}</h4>
-      <p>${item.date || ''} ${item.area || ''}</p>
-      <p>${item.status || item.priority || ''}</p>
-      <p>${item.description || item.task || ''}</p>
-    </div>
-  `).join('');
+  let html = paginated.map(item => {
+
+    if (type === 'breakdowns') {
+      return `
+      <div class="card-item">
+        <h4>${item.equipmentName}</h4>
+        <p><b>Date:</b> ${item.date} | ${item.area}</p>
+        <p><b>Priority:</b> ${item.priority}</p>
+        <p>${item.description}</p>
+      </div>`;
+    }
+
+    if (type === 'pm') {
+      return `
+      <div class="card-item">
+        <h4>${item.equipmentName}</h4>
+        <p>${item.date} | ${item.frequency}</p>
+        <p>Status: ${item.status}</p>
+        <p>${item.task}</p>
+      </div>`;
+    }
+
+    if (type === 'equipments') {
+      return `
+      <div class="card-item">
+        <h4>${item.name}</h4>
+        <p>${item.area}</p>
+        <p>Critical: ${item.criticality}</p>
+      </div>`;
+    }
+
+    if (type === 'spares') {
+      return `
+      <div class="card-item">
+        <h4>${item.name}</h4>
+        <p>Stock: ${item.currentStock}</p>
+      </div>`;
+    }
+
+  }).join('');
 
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
 
@@ -69,24 +101,32 @@ function renderList(id, items, type){
     html += `
     <div class="pagination">
       <button onclick="changePage('${key}', -1)">Prev</button>
-      <span>${pageState[key]} / ${totalPages}</span>
+      <span>Page ${pageState[key]} / ${totalPages}</span>
       <button onclick="changePage('${key}', 1)">Next</button>
     </div>`;
   }
 
   list.innerHTML = html;
-
   addSwipe(list, key);
 }
 
-// DASHBOARD + ALERTS SAME
 function renderAll(){
+  updateDashboard();
   renderList('breakdownList', state.breakdowns, 'breakdowns');
   renderList('pmList', state.pmRecords, 'pm');
   renderList('equipmentList', state.equipments, 'equipments');
+  renderList('spareList', state.spares, 'spares');
 }
 
-// FIREBASE REALTIME (UNCHANGED SAFE)
+// ================= DASHBOARD =================
+function updateDashboard(){
+  $('openFaultsCount').textContent = state.breakdowns.length;
+  $('pmDueCount').textContent = state.pmRecords.length;
+  $('criticalEquipmentCount').textContent = state.equipments.filter(x => x.criticality === 'High').length;
+  $('lowStockCount').textContent = state.spares.filter(x => Number(x.currentStock) <= Number(x.minStock)).length;
+}
+
+// ================= FIREBASE =================
 function startRealtime(){
   if(state.listenersStarted) return;
   state.listenersStarted = true;
@@ -105,9 +145,14 @@ function startRealtime(){
     state.equipments = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderAll();
   });
+
+  onSnapshot(query(collection(db,'spares'),orderBy('createdAt','desc')),snap=>{
+    state.spares = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderAll();
+  });
 }
 
-// LOGIN SYSTEM (UNCHANGED)
+// ================= AUTH =================
 onAuthStateChanged(auth, async (user)=>{
   state.user = user;
   if(user){
@@ -115,7 +160,7 @@ onAuthStateChanged(auth, async (user)=>{
   }
 });
 
-// SAVE FUNCTIONS SAME
+// ================= SAVE =================
 $('saveBreakdownBtn').onclick = async ()=>{
   await addDoc(collection(db,'breakdowns'),{
     equipmentName:$('bdEquipmentName').value,
@@ -131,6 +176,7 @@ $('savePmBtn').onclick = async ()=>{
   await addDoc(collection(db,'pmRecords'),{
     equipmentName:$('pmEquipmentName').value,
     date:$('pmDate').value,
+    frequency:$('pmFrequency').value,
     status:$('pmStatus').value,
     task:$('pmTask').value,
     createdAt:serverTimestamp()
@@ -142,6 +188,15 @@ $('saveEquipmentBtn').onclick = async ()=>{
     name:$('eqName').value,
     area:$('eqArea').value,
     criticality:$('eqCriticality').value,
+    createdAt:serverTimestamp()
+  });
+};
+
+$('saveSpareBtn').onclick = async ()=>{
+  await addDoc(collection(db,'spares'),{
+    name:$('spName').value,
+    currentStock:$('spCurrentStock').value,
+    minStock:$('spMinStock').value,
     createdAt:serverTimestamp()
   });
 };
