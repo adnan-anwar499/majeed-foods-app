@@ -6,7 +6,17 @@ import { getFirestore, collection, addDoc, setDoc, doc, getDoc, onSnapshot, quer
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const state = { user:null, role:null, breakdowns:[], pmRecords:[], equipments:[], spares:[], listenersStarted:false };
+const state = {
+  user:null,
+  role:null,
+  breakdowns:[],
+  pmRecords:[],
+  equipments:[],
+  spares:[],
+  listenersStarted:false,
+  pageSize:4,
+  pages:{ breakdowns:1, pm:1, equipments:1, spares:1 }
+};
 const $ = (id) => document.getElementById(id);
 
 function today(){ return new Date().toISOString().slice(0,10); }
@@ -19,6 +29,44 @@ function notify(title, body){
 }
 
 function setAuthStatus(text){ $('authStatus').textContent = text; }
+
+function showSection(sectionId){
+  ['sectionBreakdown','sectionPM','sectionEquipment','sectionSpares'].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    if (id === sectionId) el.classList.remove('hidden');
+    else el.classList.add('hidden');
+  });
+  document.querySelectorAll('.section-tab-btn').forEach(btn => {
+    if (btn.dataset.section === sectionId) btn.classList.add('active-tab');
+    else btn.classList.remove('active-tab');
+  });
+}
+
+function getFilteredEquipments() {
+  const filter = $('equipmentFilterArea') ? $('equipmentFilterArea').value : 'All';
+  if (filter === 'All') return state.equipments;
+  return state.equipments.filter(item => item.area === filter);
+}
+
+function getPagedItems(type, items){
+  const page = state.pages[type] || 1;
+  const start = (page - 1) * state.pageSize;
+  return items.slice(start, start + state.pageSize);
+}
+
+function paginationHtml(type, totalItems){
+  const totalPages = Math.max(1, Math.ceil(totalItems / state.pageSize));
+  const current = Math.min(state.pages[type] || 1, totalPages);
+  state.pages[type] = current;
+  return `
+    <div class="toolbar" style="margin-top:10px">
+      <button class="save-btn nav-btn page-btn" data-type="${type}" data-dir="prev" ${current <= 1 ? 'disabled' : ''}>Previous</button>
+      <div class="section-box" style="padding:10px 14px; margin:0;">Page ${current} of ${totalPages}</div>
+      <button class="save-btn nav-btn page-btn" data-type="${type}" data-dir="next" ${current >= totalPages ? 'disabled' : ''}>Next</button>
+    </div>
+  `;
+}
 
 function renderAlerts(){
   const lowStock = state.spares.filter(x => Number(x.currentStock) <= Number(x.minStock)).length;
@@ -51,16 +99,33 @@ function updateDashboard(){
 
 function renderList(id, items, type){
   const list = $(id);
-  if (!items.length) { list.innerHTML = '<p>No records yet.</p>'; return; }
-  if (type === 'breakdowns') {
-    list.innerHTML = items.map((b,i)=>`<div class="item-row"><strong>${i+1}. ${b.equipmentName}</strong><br><span class="muted">Date: ${b.date} | Area: ${b.area} | Type: ${b.equipmentType} | Fault: ${b.faultType}</span><br><span class="muted">Code: ${b.faultCode || '-'} | Priority: ${b.priority} | Shift: ${b.shift}</span><br>${b.description}</div>`).join('');
-  } else if (type === 'pm') {
-    list.innerHTML = items.map((p,i)=>`<div class="item-row"><strong>${i+1}. ${p.equipmentName}</strong><br><span class="muted">Date: ${p.date} | Area: ${p.area} | Frequency: ${p.frequency} | Focus: ${p.focus}</span><br><span class="muted">Status: ${p.status}</span><br>${p.task}</div>`).join('');
-  } else if (type === 'equipments') {
-    list.innerHTML = items.map((e,i)=>`<div class="item-row"><strong>${i+1}. ${e.name}</strong><br><span class="muted">Area: ${e.area} | Type: ${e.type} | Tag: ${e.tag}</span><br><span class="muted">Criticality: ${e.criticality}</span><br>${e.remarks || ''}</div>`).join('');
-  } else if (type === 'spares') {
-    list.innerHTML = items.map((s,i)=>`<div class="item-row"><strong>${i+1}. ${s.name}</strong><br><span class="muted">Part No: ${s.number} | For: ${s.forType}</span><br><span class="muted">Stock: ${s.currentStock} | Min: ${s.minStock} | Location: ${s.location}</span></div>`).join('');
+  if (!list) return;
+
+  let workingItems = items;
+  if (type === 'equipments') {
+    workingItems = getFilteredEquipments();
   }
+
+  const totalItems = workingItems.length;
+  if (!totalItems) {
+    list.innerHTML = '<p>No records yet.</p>';
+    return;
+  }
+
+  const paged = getPagedItems(type, workingItems);
+  let html = '';
+
+  if (type === 'breakdowns') {
+    html = paged.map((b,i)=>`<div class="item-row"><strong>${((state.pages[type]-1)*state.pageSize)+i+1}. ${b.equipmentName}</strong><br><span class="muted">Date: ${b.date} | Area: ${b.area} | Type: ${b.equipmentType} | Fault: ${b.faultType}</span><br><span class="muted">Code: ${b.faultCode || '-'} | Priority: ${b.priority} | Shift: ${b.shift}</span><br>${b.description}</div>`).join('');
+  } else if (type === 'pm') {
+    html = paged.map((p,i)=>`<div class="item-row"><strong>${((state.pages[type]-1)*state.pageSize)+i+1}. ${p.equipmentName}</strong><br><span class="muted">Date: ${p.date} | Area: ${p.area} | Frequency: ${p.frequency} | Focus: ${p.focus}</span><br><span class="muted">Status: ${p.status}</span><br>${p.task}</div>`).join('');
+  } else if (type === 'equipments') {
+    html = paged.map((e,i)=>`<div class="item-row"><strong>${((state.pages[type]-1)*state.pageSize)+i+1}. ${e.name}</strong><br><span class="muted">Area: ${e.area} | Type: ${e.type} | Tag: ${e.tag}</span><br><span class="muted">Criticality: ${e.criticality}</span><br>${e.remarks || ''}</div>`).join('');
+  } else if (type === 'spares') {
+    html = paged.map((s,i)=>`<div class="item-row"><strong>${((state.pages[type]-1)*state.pageSize)+i+1}. ${s.name}</strong><br><span class="muted">Part No: ${s.number} | For: ${s.forType}</span><br><span class="muted">Stock: ${s.currentStock} | Min: ${s.minStock} | Location: ${s.location}</span></div>`).join('');
+  }
+
+  list.innerHTML = html + paginationHtml(type, totalItems);
 }
 
 function renderAll(){
@@ -94,6 +159,7 @@ function startRealtime(){
     state.breakdowns = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     const newHigh = state.breakdowns.filter(x => x.priority === 'High').length;
     if (newHigh > prevHigh) notify('High Priority Fault', 'A new high priority breakdown has been added.');
+    state.pages.breakdowns = 1;
     renderAll();
   });
 
@@ -102,11 +168,13 @@ function startRealtime(){
     state.pmRecords = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     const newPending = state.pmRecords.filter(x => x.status === 'Pending' || x.status === 'Skipped').length;
     if (newPending > prevPending) notify('PM Alert', 'A pending or skipped PM record has been added.');
+    state.pages.pm = 1;
     renderAll();
   });
 
   onSnapshot(query(collection(db, 'equipments'), orderBy('createdAt', 'desc')), snap => {
     state.equipments = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    state.pages.equipments = 1;
     renderAll();
   });
 
@@ -115,6 +183,7 @@ function startRealtime(){
     state.spares = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     const newLow = state.spares.filter(x => Number(x.currentStock) <= Number(x.minStock)).length;
     if (newLow > prevLow) notify('Low Stock Alert', 'A spare item has reached low stock.');
+    state.pages.spares = 1;
     renderAll();
   });
 }
@@ -308,4 +377,29 @@ $('clearAllBtn').addEventListener('click', async () => {
   alert('All cloud data deleted.');
 });
 
+document.addEventListener('click', (e) => {
+  const pageBtn = e.target.closest('.page-btn');
+  if (pageBtn) {
+    const type = pageBtn.dataset.type;
+    const dir = pageBtn.dataset.dir;
+    if (dir === 'next') state.pages[type] += 1;
+    if (dir === 'prev') state.pages[type] = Math.max(1, state.pages[type] - 1);
+    renderAll();
+    return;
+  }
+
+  const sectionBtn = e.target.closest('.section-tab-btn');
+  if (sectionBtn) {
+    showSection(sectionBtn.dataset.section);
+  }
+});
+
+if ($('equipmentFilterArea')) {
+  $('equipmentFilterArea').addEventListener('change', () => {
+    state.pages.equipments = 1;
+    renderAll();
+  });
+}
+
+showSection('sectionBreakdown');
 renderAll();
