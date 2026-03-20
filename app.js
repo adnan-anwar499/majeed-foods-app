@@ -381,23 +381,7 @@ document.addEventListener('click', (e) => {
 
   // Pagination buttons
   const pageBtn = e.target.closest('.page-btn');
-  if (pageBtn) {
-    const type = pageBtn.dataset.type;
-    const dir = pageBtn.dataset.dir;
 
-    if (dir === 'next') state.pages[type] += 1;
-    if (dir === 'prev') state.pages[type] = Math.max(1, state.pages[type] - 1);
-
-    renderAll();
-    return;
-  }
-
-  // Section buttons FIXED
-  const btn = e.target.closest('.section-tab-btn');
-  if (btn) {
-    showSection(btn.dataset.section);
-  }
-});
   if (pageBtn) {
     const type = pageBtn.dataset.type;
     const dir = pageBtn.dataset.dir;
