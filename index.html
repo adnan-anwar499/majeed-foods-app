@@ -1,1 +1,26 @@
-UPDATED INDEX FILE
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Maintenance App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<h2>Maintenance System</h2>
+
+<div>
+  <button onclick="showTab('breakdown')">Breakdown</button>
+  <button onclick="showTab('pm')">PM</button>
+  <button onclick="showTab('equipment')">Equipment</button>
+  <button onclick="showTab('spares')">Spares</button>
+</div>
+
+<div id="breakdown" class="tab">Breakdown Section</div>
+<div id="pm" class="tab" style="display:none;">PM Section</div>
+<div id="equipment" class="tab" style="display:none;">Equipment Section</div>
+<div id="spares" class="tab" style="display:none;">Spares Section</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
