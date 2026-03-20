@@ -1,26 +1,261 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <title>Maintenance App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Majeed Foods PRO Final</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .hidden{display:none !important;}
+    .section-tabs{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+    .section-tab-btn{
+      border:none;
+      border-radius:16px;
+      padding:16px 14px;
+      font-size:18px;
+      font-weight:700;
+      color:#fff;
+      background:linear-gradient(90deg,#2563eb,#7c3aed);
+      box-shadow:0 8px 18px rgba(37,99,235,.18);
+    }
+    .section-tab-btn.active{
+      transform:translateY(-1px);
+      box-shadow:0 10px 24px rgba(124,58,237,.28);
+      outline:3px solid rgba(124,58,237,.18);
+    }
+    .filter-box{
+      margin:12px 0;
+      padding:12px;
+      border-radius:14px;
+      background:#f8fbff;
+      border:1px solid #d7e6ff;
+    }
+    .pager{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:14px;
+      flex-wrap:wrap;
+    }
+    .pager .page-info{
+      flex:1;
+      min-width:120px;
+      text-align:center;
+      padding:10px 14px;
+      border-radius:12px;
+      background:#f8fbff;
+      border:1px solid #d7e6ff;
+      font-weight:600;
+    }
+    .toolbar.compact{
+      gap:8px;
+      flex-wrap:wrap;
+    }
+  </style>
 </head>
 <body>
+<header>
+  <h2>MAJEED FOODS PVT LTD - BAHAWALPUR</h2>
+  <h3>Electrical & Automation Maintenance System</h3>
+  <p class="header-sub">PRO Final · Firebase Sync · Boss Dashboard · Print · Import/Export · Delete Data</p>
+</header>
 
-<h2>Maintenance System</h2>
+<div class="container">
+  <section id="userPanel" class="card hidden">
+    <h3 class="section-title">User Session</h3>
+    <div id="userInfoText" class="section-box">Not logged in.</div>
+    <div class="toolbar">
+      <button class="save-btn nav-btn" id="showAuthBtn">Switch Account</button>
+      <button class="save-btn nav-btn" id="logoutTopBtn">Logout</button>
+    </div>
+  </section>
 
-<div>
-  <button onclick="showTab('breakdown')">Breakdown</button>
-  <button onclick="showTab('pm')">PM</button>
-  <button onclick="showTab('equipment')">Equipment</button>
-  <button onclick="showTab('spares')">Spares</button>
+  <section id="authSection" class="card">
+    <h3 class="section-title">Login / Create Account</h3>
+    <label>Name</label>
+    <input id="authName" placeholder="Adnan / Ahmed / Boss">
+    <label>Email</label>
+    <input id="authEmail" placeholder="name@email.com">
+    <label>Password</label>
+    <input id="authPassword" type="password" placeholder="******">
+    <label>Role</label>
+    <select id="authRole">
+      <option>Engineer</option>
+      <option>Technician</option>
+      <option>Manager</option>
+      <option>Store</option>
+    </select>
+    <div class="toolbar">
+      <button class="save-btn nav-btn" id="signupBtn">Create Account</button>
+      <button class="save-btn nav-btn" id="loginBtn">Login</button>
+    </div>
+    <div id="authStatus" class="section-box">Not logged in.</div>
+  </section>
+
+  <section class="plant-box">
+    <h3 class="section-title">Plant Coverage</h3>
+    <ul>
+      <li><strong>Cleaning:</strong> Vibro Motors, Dampening Devices, Sliding Gates, Auto Scales</li>
+      <li><strong>Milling:</strong> 36 Roller Mills</li>
+      <li><strong>Packing:</strong> F1, F2, F3</li>
+      <li><strong>Control Room:</strong> PLC Panels, MCC Panels, VFDs</li>
+      <li><strong>Power Distribution:</strong> MV Room VCB, Transformer, LT Room Panel, Power Factor Panel</li>
+      <li><strong>Utilities:</strong> Air Compressor, Air Dryer, Generator</li>
+      <li><strong>Robotics:</strong> IRB460 Arm, Gripper, IRC5 Controller, Flex Pendant</li>
+      <li><strong>Material Handling:</strong> Passenger Elevator (6 Floor), Cargo Elevator (Heavy Duty)</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h3 class="section-title">Live Alerts & Tools</h3>
+    <div id="alertsBox" class="alerts-box"></div>
+    <div class="toolbar">
+      <button class="save-btn nav-btn" id="enableNotificationsBtn">Enable Notifications</button>
+      <button class="save-btn nav-btn" id="exportBtn">Export Backup</button>
+      <label class="import-label">Import Backup<input type="file" id="importFile" accept=".json"></label>
+      <button class="save-btn nav-btn danger-btn" id="clearAllBtn">Delete All Cloud Data</button>
+      <button class="save-btn nav-btn print-btn" id="printBtn">Print / Save PDF</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3 class="section-title">Dashboard Summary</h3>
+    <div class="dashboard-grid">
+      <div class="section-box card-blue"><strong>Open Faults</strong><p id="openFaultsCount">0</p></div>
+      <div class="section-box card-green"><strong>PM Records</strong><p id="pmDueCount">0</p></div>
+      <div class="section-box card-orange"><strong>Critical Equipment</strong><p id="criticalEquipmentCount">0</p></div>
+      <div class="section-box card-red"><strong>Low Stock Spares</strong><p id="lowStockCount">0</p></div>
+    </div>
+  </section>
+
+  <section id="bossDashboard" class="card hidden">
+    <h3 class="section-title">Boss Dashboard</h3>
+    <div class="dashboard-grid">
+      <div class="section-box"><strong>High Priority Faults</strong><p id="bossHighFaults">0</p></div>
+      <div class="section-box"><strong>Pending / Skipped PM</strong><p id="bossPendingPM">0</p></div>
+      <div class="section-box"><strong>Low Stock Items</strong><p id="bossLowStock">0</p></div>
+      <div class="section-box"><strong>Control Room Critical Equip.</strong><p id="bossCriticalControl">0</p></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3 class="section-title">Quick Sections</h3>
+    <div class="section-tabs">
+      <button class="section-tab-btn active" data-section="breakdownSection">Breakdown</button>
+      <button class="section-tab-btn" data-section="pmSection">PM</button>
+      <button class="section-tab-btn" data-section="equipmentSection">Equipment</button>
+      <button class="section-tab-btn" data-section="spareSection">Spares</button>
+    </div>
+  </section>
+
+  <section class="card" id="breakdownSection">
+    <h3 class="section-title">New Breakdown</h3>
+    <label>Date</label><input type="date" id="bdDate">
+    <label>Area</label>
+    <select id="bdArea">
+      <option>Cleaning</option><option>Milling</option><option>Packing F1</option><option>Packing F2</option><option>Packing F3</option><option>Control Room</option><option>Power Distribution</option><option>Utilities</option><option>Robotics</option><option>Material Handling</option>
+    </select>
+    <label>Equipment Name</label><input id="bdEquipmentName" placeholder="PLC Panel 1 / Transformer 1 / Passenger Elevator">
+    <label>Equipment Type</label>
+    <select id="bdEquipmentType">
+      <option>PLC Panel</option><option>MCC Panel</option><option>VFD</option><option>Motor</option><option>Vibro Motor</option><option>Sensor</option><option>Auto Scale</option><option>Sliding Gate</option><option>Dampening Device</option><option>Roller Mill</option><option>Conveyor</option><option>Elevator</option><option>Packing Machine</option><option>Air Compressor</option><option>Air Dryer</option><option>Generator</option><option>IRB460 Arm</option><option>Gripper</option><option>IRC5 Controller</option><option>Flex Pendant</option><option>MV Room VCB</option><option>Transformer</option><option>LT Room Panel</option><option>Power Factor Panel</option><option>Passenger Elevator</option><option>Cargo Elevator</option>
+    </select>
+    <label>Fault Type</label><select id="bdFaultType"><option>Electrical</option><option>Automation</option><option>Instrumentation</option><option>Mechanical</option><option>VFD Trip</option><option>Robot Fault</option></select>
+    <label>Fault Code</label><input id="bdFaultCode" placeholder="F0002 / COMM FAULT / VCB Trip">
+    <label>Priority</label><select id="bdPriority"><option>High</option><option>Medium</option><option>Low</option></select>
+    <label>Shift</label><select id="bdShift"><option>A</option><option>B</option><option>C</option></select>
+    <label>Problem Description</label><textarea id="bdDescription" placeholder="Fault details, symptoms, trip reason, observations"></textarea>
+    <button class="save-btn" id="saveBreakdownBtn">Save Breakdown</button>
+
+    <div class="filter-box">
+      <label>Filter Breakdowns by Area</label>
+      <select id="breakdownFilterArea">
+        <option value="All">All</option>
+        <option>Cleaning</option><option>Milling</option><option>Packing F1</option><option>Packing F2</option><option>Packing F3</option><option>Control Room</option><option>Power Distribution</option><option>Utilities</option><option>Robotics</option><option>Material Handling</option>
+      </select>
+    </div>
+    <h4>Saved Breakdowns</h4><div id="breakdownList" class="section-box"></div>
+  </section>
+
+  <section class="card hidden" id="pmSection">
+    <h3 class="section-title">Preventive Maintenance</h3>
+    <label>Date</label><input type="date" id="pmDate">
+    <label>Area</label>
+    <select id="pmArea">
+      <option>Cleaning</option><option>Milling</option><option>Packing F1</option><option>Packing F2</option><option>Packing F3</option><option>Control Room</option><option>Power Distribution</option><option>Utilities</option><option>Robotics</option><option>Material Handling</option>
+    </select>
+    <label>Equipment Name</label><input id="pmEquipmentName" placeholder="MCC Panel 4 / Transformer 1 / Cargo Elevator">
+    <label>Frequency</label><select id="pmFrequency"><option>Daily</option><option>Weekly</option><option>Monthly</option><option>Quarterly</option><option>Yearly</option></select>
+    <label>Focus</label><select id="pmFocus"><option>Electrical</option><option>Automation</option><option>Instrumentation</option></select>
+    <label>Task</label><textarea id="pmTask" placeholder="Check terminals, inspect breaker, transformer oil, elevator safety"></textarea>
+    <label>Status</label><select id="pmStatus"><option>Done</option><option>Pending</option><option>Skipped</option></select>
+    <button class="save-btn" id="savePmBtn">Save PM</button>
+
+    <div class="filter-box">
+      <label>Filter PM by Area</label>
+      <select id="pmFilterArea">
+        <option value="All">All</option>
+        <option>Cleaning</option><option>Milling</option><option>Packing F1</option><option>Packing F2</option><option>Packing F3</option><option>Control Room</option><option>Power Distribution</option><option>Utilities</option><option>Robotics</option><option>Material Handling</option>
+      </select>
+    </div>
+    <h4>Saved PM Records</h4><div id="pmList" class="section-box"></div>
+  </section>
+
+  <section class="card hidden" id="equipmentSection">
+    <h3 class="section-title">Equipment Register</h3>
+    <label>Equipment Name</label><input id="eqName" placeholder="Transformer 1 / Passenger Elevator">
+    <label>Area</label>
+    <select id="eqArea">
+      <option>Cleaning</option><option>Milling</option><option>Packing F1</option><option>Packing F2</option><option>Packing F3</option><option>Control Room</option><option>Power Distribution</option><option>Utilities</option><option>Robotics</option><option>Material Handling</option>
+    </select>
+    <label>Equipment Type</label>
+    <select id="eqType">
+      <option>PLC Panel</option><option>MCC Panel</option><option>VFD</option><option>Motor</option><option>Vibro Motor</option><option>Sensor</option><option>Auto Scale</option><option>Sliding Gate</option><option>Dampening Device</option><option>Roller Mill</option><option>Conveyor</option><option>Elevator</option><option>Packing Machine</option><option>Air Compressor</option><option>Air Dryer</option><option>Generator</option><option>IRB460 Arm</option><option>Gripper</option><option>IRC5 Controller</option><option>Flex Pendant</option><option>MV Room VCB</option><option>Transformer</option><option>LT Room Panel</option><option>Power Factor Panel</option><option>Passenger Elevator</option><option>Cargo Elevator</option>
+    </select>
+    <label>Tag / ID</label><input id="eqTag" placeholder="TR-01 / VCB-01 / ELV-P-01">
+    <label>Criticality</label><select id="eqCriticality"><option>High</option><option>Medium</option><option>Low</option></select>
+    <label>Remarks</label><input id="eqRemarks" placeholder="Critical electrical / automation equipment">
+    <button class="save-btn" id="saveEquipmentBtn">Save Equipment</button>
+
+    <div class="filter-box">
+      <label>Filter Equipment by Area</label>
+      <select id="equipmentFilterArea">
+        <option value="All">All</option>
+        <option>Cleaning</option><option>Milling</option><option>Packing F1</option><option>Packing F2</option><option>Packing F3</option><option>Control Room</option><option>Power Distribution</option><option>Utilities</option><option>Robotics</option><option>Material Handling</option>
+      </select>
+    </div>
+    <h4>Saved Equipment</h4><div id="equipmentList" class="section-box"></div>
+  </section>
+
+  <section class="card hidden" id="spareSection">
+    <h3 class="section-title">Critical Spares</h3>
+    <label>Part Name</label><input id="spName" placeholder="PLC I/O Card / VCB Coil / Capacitor / Elevator Sensor">
+    <label>Part Number</label><input id="spNumber" placeholder="6ES7... / ABB... / OMRON...">
+    <label>For Equipment Type</label>
+    <select id="spForType"><option>PLC Panel</option><option>MCC Panel</option><option>VFD</option><option>Motor</option><option>Sensor</option><option>Auto Scale</option><option>Robot</option><option>MV Room VCB</option><option>Transformer</option><option>LT Room Panel</option><option>Power Factor Panel</option><option>Passenger Elevator</option><option>Cargo Elevator</option></select>
+    <label>Current Stock</label><input type="number" id="spCurrentStock" placeholder="2">
+    <label>Minimum Stock</label><input type="number" id="spMinStock" placeholder="1">
+    <label>Location</label><input id="spLocation" placeholder="Rack B-2">
+    <button class="save-btn" id="saveSpareBtn">Save Spare</button>
+
+    <div class="filter-box">
+      <label>Filter Spares by Equipment Type</label>
+      <select id="spareFilterType">
+        <option value="All">All</option>
+        <option>PLC Panel</option><option>MCC Panel</option><option>VFD</option><option>Motor</option><option>Sensor</option><option>Auto Scale</option><option>Robot</option><option>MV Room VCB</option><option>Transformer</option><option>LT Room Panel</option><option>Power Factor Panel</option><option>Passenger Elevator</option><option>Cargo Elevator</option>
+      </select>
+    </div>
+    <h4>Saved Spares</h4><div id="spareList" class="section-box"></div>
+  </section>
 </div>
 
-<div id="breakdown" class="tab">Breakdown Section</div>
-<div id="pm" class="tab" style="display:none;">PM Section</div>
-<div id="equipment" class="tab" style="display:none;">Equipment Section</div>
-<div id="spares" class="tab" style="display:none;">Spares Section</div>
-
-<script src="app.js"></script>
-
+<script type="module" src="firebase-config.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
