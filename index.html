@@ -80,3 +80,129 @@ function openTab(tab) {
 
 </body>
 </html>
+<div id="breakdown" class="tab-content active">
+
+<h3>New Breakdown</h3>
+
+<input type="date" id="bdDate">
+<select id="bdArea">
+<option>Cleaning</option>
+<option>Milling</option>
+</select>
+
+<input id="bdEquipmentName" placeholder="Equipment Name">
+
+<select id="bdEquipmentType">
+<option>Motor</option>
+<option>PLC Panel</option>
+</select>
+
+<select id="bdFaultType">
+<option>Electrical</option>
+<option>Mechanical</option>
+</select>
+
+<input id="bdFaultCode" placeholder="Fault Code">
+
+<select id="bdPriority">
+<option>High</option>
+<option>Medium</option>
+</select>
+
+<select id="bdShift">
+<option>A</option>
+<option>B</option>
+</select>
+
+<textarea id="bdDescription"></textarea>
+
+<button id="saveBreakdownBtn">Save</button>
+
+<h4>Saved</h4>
+<div id="breakdownList"></div>
+
+</div>
+<div id="pm" class="tab-content">
+
+<h3>PM</h3>
+
+<input type="date" id="pmDate">
+
+<select id="pmArea">
+<option>Cleaning</option>
+</select>
+
+<input id="pmEquipmentName">
+
+<select id="pmFrequency">
+<option>Daily</option>
+<option>Monthly</option>
+</select>
+
+<select id="pmFocus">
+<option>Electrical</option>
+</select>
+
+<textarea id="pmTask"></textarea>
+
+<select id="pmStatus">
+<option>Done</option>
+<option>Pending</option>
+</select>
+
+<button id="savePmBtn">Save</button>
+
+<div id="pmList"></div>
+
+</div>
+<div id="equipment" class="tab-content">
+
+<h3>Equipment</h3>
+
+<input id="eqName" placeholder="Name">
+
+<select id="eqArea">
+<option>Cleaning</option>
+</select>
+
+<select id="eqType">
+<option>Motor</option>
+</select>
+
+<input id="eqTag">
+
+<select id="eqCriticality">
+<option>High</option>
+<option>Low</option>
+</select>
+
+<input id="eqRemarks">
+
+<button id="saveEquipmentBtn">Save</button>
+
+<div id="equipmentList"></div>
+
+</div>
+<div id="spares" class="tab-content">
+
+<h3>Spares</h3>
+
+<input id="spName">
+
+<input id="spNumber">
+
+<select id="spForType">
+<option>Motor</option>
+</select>
+
+<input type="number" id="spCurrentStock">
+
+<input type="number" id="spMinStock">
+
+<input id="spLocation">
+
+<button id="saveSpareBtn">Save</button>
+
+<div id="spareList"></div>
+
+</div>
